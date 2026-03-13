@@ -34,7 +34,7 @@ type potatClaims struct {
 type unauthFunc func(
 	w http.ResponseWriter,
 	status int,
-	response interface{},
+	response any,
 	start time.Time,
 )
 
@@ -130,7 +130,7 @@ func (a *Authenticator) verifyDynamicAuth(ctx context.Context, token string) (bo
 	return true, user
 }
 
-func (a *Authenticator) jwtKeyFunc(token *jwt.Token) (interface{}, error) {
+func (a *Authenticator) jwtKeyFunc(token *jwt.Token) (any, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("%w: unexpected signing method: %v", errUnexpectedSign, token.Header["alg"])
 	}

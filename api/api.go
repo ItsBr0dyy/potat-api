@@ -105,7 +105,7 @@ func (a *Server) registerRoute(route Route) {
 func GenericResponse(
 	writer http.ResponseWriter,
 	code int,
-	response interface{},
+	response any,
 	start time.Time,
 ) {
 	writer.Header().Set("Content-Type", "application/json")

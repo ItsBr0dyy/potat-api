@@ -28,7 +28,7 @@ func init() {
 	})
 }
 
-func setCache(ctx context.Context, key string, data interface{}) {
+func setCache(ctx context.Context, key string, data any) {
 	redis, ok := ctx.Value(middleware.RedisKey).(*db.RedisClient)
 	if !ok {
 		logger.Error.Println("Redis client not found in context")

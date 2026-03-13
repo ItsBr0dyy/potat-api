@@ -88,8 +88,8 @@ func (r *redirects) cleanRedirectProtocolSoLinksActuallyWork(url string) string 
 	if strings.HasPrefix(url, "https://") {
 		return url
 	}
-	if strings.HasPrefix(url, "http://") {
-		return "https://" + strings.TrimPrefix(url, "http://")
+	if after, ok := strings.CutPrefix(url, "http://"); ok {
+		return "https://" + after
 	}
 	if strings.HasPrefix(url, "//") {
 		return "https:" + url
