@@ -205,6 +205,8 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 			pfp = conn.PFP
 		case common.STV:
 			stvID = conn.UserID
+		case common.DISCORD, common.KICK:
+			// not used for login payload
 		}
 	}
 
