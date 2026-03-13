@@ -16,6 +16,8 @@ import (
 	"github.com/Potat-Industries/potat-api/common/utils"
 )
 
+const commandBridgeTimeout = 5 * time.Second
+
 // HelpResponse is the response type for the /help endpoint.
 type HelpResponse = common.GenericResponse[common.Command]
 
@@ -28,7 +30,7 @@ func init() {
 	})
 }
 
-func setCache(ctx context.Context, key string, data interface{}) {
+func setCache(ctx context.Context, key string, data any) {
 	redis, ok := ctx.Value(middleware.RedisKey).(*db.RedisClient)
 	if !ok {
 		logger.Error.Println("Redis client not found in context")
@@ -114,7 +116,7 @@ func getCommandsHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("X-Cache-Hit", "MISS")
 
 	response, err := utils.BridgeRequest(
-		5*time.Second,
+		commandBridgeTimeout,
 		"get-commands",
 	)
 	if err != nil {

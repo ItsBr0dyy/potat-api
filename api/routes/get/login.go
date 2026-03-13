@@ -22,9 +22,11 @@ import (
 
 //nolint:gosec,lll
 const (
-	twitchOauthURI   = "https://id.twitch.tv/oauth2/authorize"
-	twitchOauthToken = "https://id.twitch.tv/oauth2/token"
-	scopes           = "channel:bot chat:read user:read:moderated_channels channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:read:followers channel:read:hype_train channel:read:guest_star"
+	twitchOauthURI    = "https://id.twitch.tv/oauth2/authorize"
+	twitchOauthToken  = "https://id.twitch.tv/oauth2/token"
+	scopes            = "channel:bot chat:read user:read:moderated_channels channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:read:followers channel:read:hype_train channel:read:guest_star"
+	replyDenyTTL      = 20 * time.Second
+	httpClientTimeout = 10 * time.Second
 )
 
 var replyDeny sync.Map //nolint:gochecknoglobals // Used to prevent replay attacks on the oauth flow.
@@ -42,7 +44,7 @@ func setReplyDeny() string {
 	nonce := uuid.New().String()
 	replyDeny.Store(nonce, true)
 	go func(n string) {
-		time.Sleep(20 * time.Second)
+		time.Sleep(replyDenyTTL)
 		replyDeny.Delete(n)
 	}(nonce)
 
@@ -116,10 +118,11 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 	}
 
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: httpClientTimeout,
 	}
 
 	// Excahnge code for access token
+	// #nosec G704 -- Twitch token exchange hits a fixed non-user-controlled URL
 	tokenResp, err := client.Do(req)
 	if err != nil {
 		http.Error(writer, "Failed to get access token", http.StatusInternalServerError)
@@ -227,9 +230,9 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 		ID        string `json:"id"`
 		Login     string `json:"login"`
 		Name      string `json:"name"`
-		StvID     string `json:"stv_id"`
+		StvID     string `json:"stv_id"` //nolint:tagliatelle // API contract uses snake_case
 		PFP       string `json:"pfp"`
-		IsChannel bool   `json:"is_channel"`
+		IsChannel bool   `json:"is_channel"` //nolint:tagliatelle // API contract uses snake_case
 	}
 
 	payloadJSON, err := json.Marshal(loginPayload{
