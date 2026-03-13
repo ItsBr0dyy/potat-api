@@ -107,7 +107,7 @@ type TwitchEmote struct {
 
 // NewNormalEmote returns a normalized emote object based on the provided emote data and platform.
 func NewNormalEmote( //nolint:cyclop
-	emoteData interface{},
+	emoteData any,
 	setID string,
 	provider Platforms,
 	emoteType EmoteType,

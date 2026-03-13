@@ -274,13 +274,13 @@ func updateOwnedBadgeView(ctx context.Context, clickhouse *ClickhouseClient) {
 
 	// Insert owned badges from active table first
 	// prepare := `
-			// INSERT INTO potatbotat.twitch_owned_badges
-			// SELECT
-			// 	badge,
-			// 	user_id,
-			// 	version
-			// FROM potatbotat.twitch_badges
-			// WHERE badge NOT IN ('', 'NOBADGE')
+	// INSERT INTO potatbotat.twitch_owned_badges
+	// SELECT
+	// 	badge,
+	// 	user_id,
+	// 	version
+	// FROM potatbotat.twitch_badges
+	// WHERE badge NOT IN ('', 'NOBADGE')
 	// `
 
 	// err := clickhouse.Exec(ctx, prepare)

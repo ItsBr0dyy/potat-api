@@ -151,7 +151,7 @@ func runWithTimeout(
 	done := make(chan error, 1)
 
 	var lastError error
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		attemptCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
 

@@ -91,7 +91,7 @@ func getIPToken(
 		return false, 0, 0, err
 	}
 
-	results, ok := result.([]interface{})
+	results, ok := result.([]any)
 	if !ok {
 		return false, 0, 0, errBadRedisResponse
 	}

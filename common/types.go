@@ -98,18 +98,18 @@ type TwitchRoles struct {
 
 // Channel represents a channel on a platform, including its blocks, settings, commands, and other metadata.
 type Channel struct {
-	Blocks      FilteredBlocks         `json:"blocks,omitempty"`
-	JoinedAt    *time.Time             `json:"joined_at,omitempty"`
-	Meta        map[string]interface{} `json:"meta"`
-	Commands    *[]ChannelCommand      `json:"commands,omitempty"`
-	ChannelID   string                 `json:"channel_id"`
-	Username    string                 `json:"username"`
-	Platform    Platforms              `json:"platform"`
-	State       string                 `json:"state"`
-	AddedBy     []AddedByData          `json:"added_by,omitempty"`
-	Editors     []string               `json:"editors"`
-	Ambassadors []string               `json:"ambassadors"`
-	Settings    ChannelSettings        `json:"settings"`
+	Blocks      FilteredBlocks    `json:"blocks,omitempty"`
+	JoinedAt    *time.Time        `json:"joined_at,omitempty"`
+	Meta        map[string]any    `json:"meta"`
+	Commands    *[]ChannelCommand `json:"commands,omitempty"`
+	ChannelID   string            `json:"channel_id"`
+	Username    string            `json:"username"`
+	Platform    Platforms         `json:"platform"`
+	State       string            `json:"state"`
+	AddedBy     []AddedByData     `json:"added_by,omitempty"`
+	Editors     []string          `json:"editors"`
+	Ambassadors []string          `json:"ambassadors"`
+	Settings    ChannelSettings   `json:"settings"`
 }
 
 // FilteredBlocks represents the blocks of users and commands in a channel.
@@ -379,7 +379,7 @@ const (
 )
 
 // Flags represents a map of flags, where each flag is identified by a string key and can hold any type of value.
-type Flags map[string]interface{}
+type Flags map[string]any
 
 // CommandConditions represents the conditions under which a command can be executed.
 type CommandConditions struct {

@@ -330,10 +330,10 @@ func (db *PostgresClient) getChannelByType( //nolint:cyclop
 		FROM channels c
 	`
 
-	switch {
-	case chanType == "ID":
+	switch chanType {
+	case "ID":
 		query += `WHERE c.channel_id = $1 `
-	case chanType == "NAME":
+	case "NAME":
 		query += `WHERE c.username = $1 `
 	default:
 		return nil, errInvalidType
@@ -394,9 +394,10 @@ func (db *PostgresClient) getChannelByType( //nolint:cyclop
 		}
 
 		for _, block := range blocks {
-			if block.BlockType == common.UserBlock {
+			switch block.BlockType {
+			case common.UserBlock:
 				*channel.Blocks.Users = append(*channel.Blocks.Users, block)
-			} else if block.BlockType == common.CommandBlock {
+			case common.CommandBlock:
 				*channel.Blocks.Commands = append(*channel.Blocks.Commands, block)
 			}
 		}

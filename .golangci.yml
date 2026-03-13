@@ -38,7 +38,7 @@ linters:
     - maintidx         # maintidx measures the maintainability index of each function.
     - makezero         # Finds slice declarations with non-zero initial length
     - misspell         # Finds commonly misspelled English words in comments
-    - mnd              # An analyzer to detect magic numbers
+    - modernize        # Replace and suggests simplifications to code
     - nakedret         # Finds naked returns in functions greater than a specified function length
     - nestif           # Reports deeply nested if statements
     - nilerr           # Finds the code that returns nil even if it checks that the error is not nil.
@@ -49,7 +49,6 @@ linters:
     - revive           # golint replacement, finds style mistakes
     - sqlclosecheck    # Checks that sql.Rows and sql.Stmt are closed.
     - staticcheck      # Staticcheck is a go vet on steroids, applying a ton of static analysis checks
-    - tagliatelle      # Checks the struct tags.
     - thelper          # thelper detects golang test helpers without t.Helper() call and checks the consistency of test helpers
     - unconvert        # Remove unnecessary type conversions
     - unparam          # Reports unused function parameters
@@ -64,11 +63,13 @@ linters:
     - gomodguard       # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
     - interfacebloat   # A linter that checks length of interface.
     - ireturn          # Accept Interfaces, Return Concrete Types
+    - mnd              # An analyzer to detect magic numbers
     - nolintlint       # Reports ill-formed or insufficient nolint directives
     - paralleltest     # paralleltest detects missing usage of t.Parallel() method in your Go test
     - prealloc         # Finds slice declarations that could potentially be preallocated
     - promlinter       # Check Prometheus metrics naming via promlint
     - rowserrcheck     # checks whether Err of rows is checked successfully
+    - tagliatelle      # Checks the struct tags.
     - testpackage      # linter that makes you use a separate _test package
     - tparallel        # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
     - wrapcheck        # Checks that errors returned from external packages are wrapped
@@ -142,3 +143,6 @@ formatters:
     - goimports        # Goimports does everything that gofmt does. Additionally it checks unused imports
   exclusions:
     generated: lax
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
