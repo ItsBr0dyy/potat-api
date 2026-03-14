@@ -71,7 +71,7 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 	code := query.Get("code")
 	state := query.Get("state")
 
-	redirectURI := fmt.Sprintf("%slogin", config.Twitch.OauthURI)
+	redirectURI := strings.TrimRight(config.Twitch.OauthURI, "/") + "/login"
 
 	// Redirect to twitch oauth
 	if code == "" {
