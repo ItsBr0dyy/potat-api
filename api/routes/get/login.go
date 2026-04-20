@@ -24,7 +24,7 @@ import (
 const (
 	twitchOauthURI    = "https://id.twitch.tv/oauth2/authorize"
 	twitchOauthToken  = "https://id.twitch.tv/oauth2/token"
-	scopes            = "channel:bot chat:read user:read:moderated_channels channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:read:followers channel:read:hype_train channel:read:guest_star"
+	scopes            = "bits:read chat:read chat:edit user:read:emotes user:read:moderated_channels channel:manage:broadcast channel:manage:redemptions channel:manage:ads channel:edit:commercial channel:read:subscriptions channel:read:guest_star channel:read:hype_train channel:read:charity channel:read:goals channel:read:polls channel:read:vips channel:read:predictions channel:moderate channel:bot moderator:read:followers moderator:read:chatters moderator:read:automod_settings moderator:read:blocked_terms moderator:read:chat_settings moderator:read:shield_mode"
 	replyDenyTTL      = 20 * time.Second
 	httpClientTimeout = 10 * time.Second
 )
