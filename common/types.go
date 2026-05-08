@@ -80,7 +80,7 @@ type TwitchChannelMeta struct {
 // TwitchUserMeta represents the metadata for a user on Twitch, including their color and roles.
 type TwitchUserMeta struct {
 	Color string      `json:"color,omitempty"`
-	Roles TwitchRoles `json:"roles,omitempty"`
+	Roles TwitchRoles `json:"roles,omitzero"`
 }
 
 // StvUserMeta represents the metadata for a user on 7TV, including their paint ID and roles.
@@ -98,7 +98,7 @@ type TwitchRoles struct {
 
 // Channel represents a channel on a platform, including its blocks, settings, commands, and other metadata.
 type Channel struct {
-	Blocks      FilteredBlocks    `json:"blocks,omitempty"`
+	Blocks      FilteredBlocks    `json:"blocks,omitzero"`
 	JoinedAt    *time.Time        `json:"joined_at,omitempty"`
 	Meta        map[string]any    `json:"meta"`
 	Commands    *[]ChannelCommand `json:"commands,omitempty"`
@@ -183,8 +183,8 @@ type CommandSettings struct {
 type PlatformOauth struct {
 	AddedAt      time.Time `json:"added_at"`
 	PlatformID   string    `json:"platform_id"`
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
+	AccessToken  string    `json:"access_token"`  //nolint:gosec
+	RefreshToken string    `json:"refresh_token"` //nolint:gosec
 	Platform     Platforms `json:"platform"`
 	Scope        []string  `json:"scope"`
 	ExpiresIn    int       `json:"expires_in"`
@@ -298,8 +298,8 @@ type TwitchValidation struct {
 
 // GenericOAUTHResponse represents a generic OAuth response structure.
 type GenericOAUTHResponse struct {
-	AccessToken  string   `json:"access_token"`
-	RefreshToken string   `json:"refresh_token"`
+	AccessToken  string   `json:"access_token"`  //nolint:gosec
+	RefreshToken string   `json:"refresh_token"` //nolint:gosec
 	TokenType    string   `json:"token_type"`
 	Scope        []string `json:"scope"`
 	ExpiresIn    int      `json:"expires_in"`
