@@ -49,7 +49,7 @@ func InitPostgres(ctx context.Context, config common.Config) (*PostgresClient, e
 	return &PostgresClient{pool}, nil
 }
 
-func loadConfig(config common.Config) (*pgxpool.Config, error) {
+func loadConfig(config common.Config) (*pgxpool.Config, error) { //nolint:unparam
 	user := config.Postgres.User
 	if user == "" {
 		user = "postgres"
@@ -57,7 +57,7 @@ func loadConfig(config common.Config) (*pgxpool.Config, error) {
 
 	host := config.Postgres.Host
 	if host == "" {
-		host = "localhost"
+		host = "localhost" //nolint:goconst
 	}
 
 	port := config.Postgres.Port
@@ -399,6 +399,8 @@ func (db *PostgresClient) getChannelByType( //nolint:cyclop
 				*channel.Blocks.Users = append(*channel.Blocks.Users, block)
 			case common.CommandBlock:
 				*channel.Blocks.Commands = append(*channel.Blocks.Commands, block)
+			case common.GlobalBlock:
+				continue
 			}
 		}
 	} else {
