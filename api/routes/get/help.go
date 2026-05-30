@@ -16,6 +16,8 @@ import (
 	"github.com/Potat-Industries/potat-api/common/utils"
 )
 
+const commandBridgeTimeout = 5 * time.Second
+
 // HelpResponse is the response type for the /help endpoint.
 type HelpResponse = common.GenericResponse[common.Command]
 
@@ -114,7 +116,7 @@ func getCommandsHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("X-Cache-Hit", "MISS")
 
 	response, err := utils.BridgeRequest(
-		5*time.Second,
+		commandBridgeTimeout,
 		"get-commands",
 	)
 	if err != nil {

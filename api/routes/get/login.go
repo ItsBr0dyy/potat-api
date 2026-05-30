@@ -3,6 +3,7 @@ package get
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,7 +12,9 @@ import (
 	"time"
 
 	"github.com/Potat-Industries/potat-api/api"
+	"github.com/Potat-Industries/potat-api/api/middleware"
 	"github.com/Potat-Industries/potat-api/common"
+	"github.com/Potat-Industries/potat-api/common/db"
 	"github.com/Potat-Industries/potat-api/common/logger"
 	"github.com/Potat-Industries/potat-api/common/utils"
 	"github.com/google/uuid"
@@ -19,9 +22,11 @@ import (
 
 //nolint:gosec,lll
 const (
-	twitchOauthURI   = "https://id.twitch.tv/oauth2/authorize"
-	twitchOauthToken = "https://id.twitch.tv/oauth2/token"
-	scopes           = "channel:bot chat:read user:read:moderated_channels channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:read:followers channel:read:hype_train channel:read:guest_star"
+	twitchOauthURI    = "https://id.twitch.tv/oauth2/authorize"
+	twitchOauthToken  = "https://id.twitch.tv/oauth2/token"
+	scopes            = "bits:read chat:read chat:edit user:read:emotes user:read:moderated_channels channel:manage:broadcast channel:manage:redemptions channel:manage:ads channel:edit:commercial channel:read:subscriptions channel:read:guest_star channel:read:hype_train channel:read:charity channel:read:goals channel:read:polls channel:read:vips channel:read:predictions channel:moderate channel:bot moderator:read:followers moderator:read:chatters moderator:read:automod_settings moderator:read:blocked_terms moderator:read:chat_settings moderator:read:shield_mode"
+	replyDenyTTL      = 20 * time.Second
+	httpClientTimeout = 10 * time.Second
 )
 
 var replyDeny sync.Map //nolint:gochecknoglobals // Used to prevent replay attacks on the oauth flow.
@@ -39,7 +44,7 @@ func setReplyDeny() string {
 	nonce := uuid.New().String()
 	replyDeny.Store(nonce, true)
 	go func(n string) {
-		time.Sleep(20 * time.Second)
+		time.Sleep(replyDenyTTL)
 		replyDeny.Delete(n)
 	}(nonce)
 
@@ -66,7 +71,7 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 	code := query.Get("code")
 	state := query.Get("state")
 
-	redirectURI := fmt.Sprintf("%slogin", config.Twitch.OauthURI)
+	redirectURI := strings.TrimRight(config.Twitch.OauthURI, "/") + "/login"
 
 	// Redirect to twitch oauth
 	if code == "" {
@@ -113,7 +118,7 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 	}
 
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: httpClientTimeout,
 	}
 
 	// Excahnge code for access token
@@ -139,9 +144,9 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 	ok, validation, err := utils.ValidateHelixToken(
 		request.Context(),
 		tokenData.AccessToken,
-		false,
+		true, // returnAll = true to get login + user_id
 	)
-	if err != nil || !ok || validation.UserID == "" {
+	if err != nil || !ok {
 		api.GenericResponse(writer, http.StatusUnauthorized, AuthorizedUserResponse{
 			Data:   &[]SiteUserData{},
 			Errors: &[]common.ErrorMessage{{Message: "Failed to validate access token"}},
@@ -150,26 +155,110 @@ func twitchLoginHandler(writer http.ResponseWriter, request *http.Request) { //n
 		return
 	}
 
-	// check if user exists in the database
-	// user, err := db.Postgres.GetUserByConnection(
-	// 	r.Context(),
-	// 	validation.UserID,
-	// 	common.TWITCH,
-	// )
-	// if not send rabbitmq message to create user on potat
-	// if user created update data, set oauth token
+	postgres, ok := request.Context().Value(middleware.PostgresKey).(*db.PostgresClient)
+	if !ok {
+		logger.Error.Println("Postgres client not found in context")
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 
-	// auth successful, close the popup and send token backarino
+		return
+	}
+
+	// Upsert OAuth token (non fatal)
+	if _, upsertErr := postgres.Exec(
+		request.Context(),
+		`INSERT INTO connection_oauth (platform_id, access_token, refresh_token, scope, expires_in, added_at, platform)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 ON CONFLICT (platform_id, platform) DO UPDATE SET
+		     access_token = EXCLUDED.access_token,
+		     refresh_token = EXCLUDED.refresh_token,
+		     scope = EXCLUDED.scope,
+		     expires_in = EXCLUDED.expires_in,
+		     added_at = EXCLUDED.added_at`,
+		validation.UserID,
+		tokenData.AccessToken,
+		tokenData.RefreshToken,
+		tokenData.Scope,
+		tokenData.ExpiresIn,
+		time.Now(),
+		common.TWITCH,
+	); upsertErr != nil {
+		logger.Warn.Println("Failed to upsert OAuth token: ", upsertErr)
+	}
+
+	user, err := postgres.GetUserByName(request.Context(), validation.Login)
+	if err != nil {
+		if errors.Is(err, db.ErrPostgresNoRows) {
+			api.GenericResponse(writer, http.StatusNotFound, AuthorizedUserResponse{
+				Data:   &[]SiteUserData{},
+				Errors: &[]common.ErrorMessage{{Message: "User not found. Please make sure the bot is in your channel first."}},
+			}, start)
+		} else {
+			logger.Error.Println("Error fetching user: ", err)
+			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	var pfp, stvID string
+	for _, conn := range user.Connections {
+		switch conn.Platform {
+		case common.TWITCH:
+			pfp = conn.PFP
+		case common.STV:
+			stvID = conn.UserID
+		case common.DISCORD, common.KICK:
+			// not used for login payload
+		}
+	}
+
+	channelData, channelErr := postgres.GetChannelByID(request.Context(), validation.UserID, common.TWITCH)
+	isChannel := channelErr == nil && channelData != nil && channelData.State == "JOINED"
+
+	auth := middleware.NewAuthenticator(config.Twitch.ClientSecret, nil)
+	jwtToken, err := auth.CreateJWT(user.ID)
+	if err != nil {
+		logger.Error.Println("Failed to create JWT: ", err)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+
+		return
+	}
+
+	type loginPayload struct {
+		Token     string `json:"token"`
+		ID        string `json:"id"`
+		Login     string `json:"login"`
+		Name      string `json:"name"`
+		StvID     string `json:"stv_id"` //nolint:tagliatelle // API contract uses snake_case
+		PFP       string `json:"pfp"`
+		IsChannel bool   `json:"is_channel"` //nolint:tagliatelle // API contract uses snake_case
+	}
+
+	payloadJSON, err := json.Marshal(loginPayload{
+		Token:     jwtToken,
+		ID:        validation.UserID,
+		Login:     validation.Login,
+		Name:      user.Display,
+		StvID:     stvID,
+		PFP:       pfp,
+		IsChannel: isChannel,
+	})
+	if err != nil {
+		logger.Error.Println("Failed to marshal login payload: ", err)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+
+		return
+	}
+
 	html := fmt.Sprintf(`
 		<script>
 			if (window.opener) {
-				window.opener.postMessage(%s, '%s');
+				window.opener.postMessage(%s, '*');
 				window.close();
 			}
 		</script>
 		`,
-		string("token and stuff lol"),
-		strings.Replace(config.Twitch.OauthURI, "api.", "", 1),
+		string(payloadJSON),
 	)
 	writer.Header().Set("Content-Type", "text/html")
 	writer.WriteHeader(http.StatusOK)
