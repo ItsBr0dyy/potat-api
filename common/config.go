@@ -20,7 +20,7 @@ type Config struct {
 // TwitchConfig holds the configuration for Twitch API integration.
 type TwitchConfig struct {
 	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
+	ClientSecret string `json:"client_secret"` //nolint:gosec
 	OauthURI     string `json:"oauth_uri"`
 }
 
@@ -33,7 +33,7 @@ type BoolConfig struct {
 type APIConfig struct {
 	Host    string `json:"host"`
 	Port    string `json:"port"`
-	AuthKey string `json:"authkey,omitempty"`
+	AuthKey string `json:"authkey,omitempty"` //nolint:gosec
 	Enabled bool   `json:"enabled"`
 }
 
@@ -51,7 +51,7 @@ type SQLConfig struct {
 	Host     string `json:"host"`
 	Port     string `json:"port"`
 	User     string `json:"user"`
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec
 	Database string `json:"database"`
 }
 
